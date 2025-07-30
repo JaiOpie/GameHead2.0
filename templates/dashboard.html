@@ -1,0 +1,409 @@
+{% extends 'index.html' %}
+{% block title %}Dashboard{% endblock title %}
+
+{% block styles %}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1e1e2f;
+  color: #f0f0f0;
+}
+
+.event-container a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.add-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #00cc66;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 20px;
+  height: 60px;
+  padding: 0 24px;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.add-button:hover {
+  background-color: #00a653;
+  transform: scale(1.05);
+}
+
+.add-button .plus-icon {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.add-button .button-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.event-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-gap: 20px;
+  margin-top: 20px;
+}
+
+.event-box {
+  position: relative;
+  background-color: #2a2a40;
+  border-radius: 12px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  cursor: pointer;
+  color: #fff;
+  transform: scale(1);
+  border-left: 4px solid #00cc99;
+  animation: fadeInUp 0.4s ease both;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.event-box:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://cdn.mos.cms.futurecdn.net/cRFFW6JNXqEtkBA3P2U68m.jpg');
+  border-left: 4px solid #00ffcc;
+}
+
+.event-box:hover .event-details {
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.event-details {
+  padding: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: rgba(42, 42, 64, 0.9);
+}
+
+.event-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #00ffcc;
+  margin-bottom: 12px;
+}
+
+.event-info span {
+  display: block;
+  font-size: 14px;
+  color: #b0b0b0;
+  margin-bottom: 4px;
+}
+
+.event-ready {
+  color: #4CAF50;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.event-waiting {
+  color: #FF3D00;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.event-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.event-match-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: #444;
+  border: 1px solid #666;
+  color: white;
+}
+
+.event-unmatched {
+  background-color: #ff4081;
+  border-color: #ff79a8;
+}
+
+.event-matched {
+  background-color: #4caf50;
+  border-color: #81c784;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: #2a2a40;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: fadeInUp 0.3s ease;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 24px;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #fff;
+}
+
+.modal-content h2 {
+  text-align: center;
+  color: #00ffcc;
+  margin-bottom: 24px;
+  font-size: 22px;
+  text-shadow: 2px 2px #000;
+}
+
+.modal-content .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-content .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.modal-content .form-group input[type="text"],
+.modal-content .form-group input[type="number"],
+.modal-content .form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #555555;
+  border-radius: 8px;
+  background-color: #1e1e2f;
+  color: #ffffff;
+  font-size: 14px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group select:focus {
+  outline: none;
+  border: 1px solid #00cc99;
+}
+
+.modal-content .form-group input[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background-color: #00cc66;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.modal-content .form-group input[type="submit"]:hover {
+  background-color: #00a653;
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #00cc66;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  z-index: 3000;
+  opacity: 1;
+  animation: slideInFadeOut 4s forwards;
+}
+
+@keyframes slideInFadeOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+{% endblock styles %}
+
+{% block body %}
+
+{% if messages %}
+<div id="notification" class="notification">
+  <span id="notif-close" style="cursor:pointer; margin-left: 10px;">&times;</span>
+  {% for message in messages %}
+    <p>{{ message }}</p>
+  {% endfor %}
+</div>
+
+{% endif %}
+
+<div class="container">
+  <div class="event-container">
+    {% for event in gamedata %}
+    <a href="/event/{{ event.id }}/">
+      <div class="event-box">
+        <div class="event-details">
+          <div class="event-status">
+            <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
+              {% if not event.is_match %}Ready to match{% endif %}
+            </span>
+          </div>
+          <div class="event-title">{{ event.game }}</div>
+          <div class="event-info">
+            <span>Event ID: {{ event.id }}</span>
+            <span>Created by: {{ event.user }}</span>
+            <span>Match type: {{ event.match_type }}</span>
+            <span>Amount: {{ event.amount }}</span>
+          </div>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Floating Add Button -->
+<button class="add-button" role="button" title="Create a Challenge">
+  <span class="plus-icon">+</span>
+  <span class="button-label">Create a Challenge</span>
+</button>
+
+<!-- Add Event Modal -->
+<div id="addEventModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="close-button" onclick="closeModal()">&times;</span>
+    <h2>Add New Event</h2>
+    <form action="{% url 'addevent' %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="gamename">Game Name:</label>
+        <input type="text" id="gamename" name="gamename" required placeholder="Enter the game name">
+      </div>
+      <div class="form-group">
+        <label for="ingamename">In-Game Name:</label>
+        <input type="text" id="ingamename" name="ingamename" required placeholder="Enter your in-game name">
+      </div>
+      <div class="form-group">
+        <label for="matchtype">Match Type:</label>
+        <select id="matchtype" name="matchtype" required>
+          <option value="" selected disabled>Select Match Type</option>
+          <option value="battleroyale">Battle Royale</option>
+          <option value="deathmatch">Deathmatch</option>
+          <option value="solo">Solo</option>
+          <option value="duo">Duo</option>
+          <option value="squad">Squad</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="amount">Amount (in Rs.):</label>
+        <input type="number" id="amount" name="amount" required placeholder="Enter the match amount">
+      </div>
+      <div class="form-group">
+        <input type="submit" value="Create Event">
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script>
+  const modal = document.getElementById("addEventModal");
+
+  function openModal() {
+    modal.style.display = "flex";
+  }
+
+  function closeModal() {
+    modal.style.display = "none";
+  }
+
+  document.querySelector(".add-button").addEventListener("click", function (e) {
+    e.preventDefault();
+    openModal();
+  });
+
+  window.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.getElementById("notif-close")?.addEventListener("click", () => {
+  const notif = document.getElementById("notification");
+  notif.style.opacity = 0;
+  setTimeout(() => notif.style.display = "none", 300);
+});
+
+</script>
+{% endblock body %}

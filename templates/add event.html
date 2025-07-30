@@ -1,0 +1,122 @@
+{% comment %} {% extends 'index.html' %}
+{% block title %}Add New Event{% endblock title %}
+
+{% block styles %}
+@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap');
+
+.container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #2a2a40;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+  text-align: center;
+  color: #00ffcc;
+  margin-bottom: 24px;
+  font-size: 22px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #555555;
+  border-radius: 8px;
+  background-color: #1e1e2f;
+  color: #ffffff;
+  font-size: 14px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border: 1px solid #00cc99;
+}
+
+.form-group input[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background-color: #00cc66;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.form-group input[type="submit"]:hover {
+  background-color: #00a653;
+}
+
+h2 {
+  text-shadow: 2px 2px #000;
+}
+{% endblock styles %}
+
+{% block body %}
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+
+<div class="container">
+  <h2>Add New Event</h2>
+  <form action="" method="POST">
+    {% csrf_token %}
+
+    <!-- Game Name Input -->
+    <div class="form-group">
+      <label for="gamename">Game Name:</label>
+      <input type="text" id="gamename" name="gamename" required placeholder="Enter the game name">
+    </div>
+
+    <!-- In-Game Name Input -->
+    <div class="form-group">
+      <label for="ingamename">In-Game Name:</label>
+      <input type="text" id="in-game-name" name="ingamename" required placeholder="Enter your in-game name">
+    </div>
+
+    <!-- Match Type Dropdown -->
+    <div class="form-group">
+      <label for="matchtype">Match Type:</label>
+      <select id="matchtype" name="matchtype" required>
+        <option value="" selected disabled>Select Match Type</option>
+        <option value="battleroyale">Battle Royale</option>
+        <option value="deathmatch">Deathmatch</option>
+        <option value="solo">Solo</option>
+        <option value="duo">Duo</option>
+        <option value="squad">Squad</option>
+      </select>
+    </div>
+
+    <!-- Amount Input -->
+    <div class="form-group">
+      <label for="amount">Amount (in Rs.):</label>
+      <input type="number" id="amount" name="amount" required placeholder="Enter the match amount">
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-group">
+      <input type="submit" value="Create Event">
+    </div>
+  </form>
+</div>
+{% endblock body %} {% endcomment %}

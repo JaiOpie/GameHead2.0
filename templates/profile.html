@@ -1,0 +1,220 @@
+{% extends 'index.html' %}
+{% block title %}Profile{% endblock title %}
+
+{% block styles %}
+.tab-container {
+  max-width: 960px;
+  margin: 20px auto;
+  background-color: #1e1e2f;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tab Header */
+.tab-header {
+  display: flex;
+  justify-content: center;
+  background-color: #00cc66;
+  padding: 10px;
+}
+
+.tab-link {
+  padding: 12px 24px;
+  margin: 0 10px;
+  font-weight: bold;
+  color: white;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+
+.tab-link.active {
+  background-color: #00a653;
+  color: #fff;
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+  height: 500px; /* Set your preferred height */
+  overflow-y: auto; /* Scroll only inside tab content */
+  padding: 24px;
+  background-color: #2a2a40;
+  color: #f0f0f0;
+}
+
+.tab-content h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* Event Box (Consistent with Dashboard) */
+.event-box {
+  position: relative;
+  background-color: #2a2a40;
+  border-radius: 12px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  cursor: pointer;
+  color: #fff;
+  border-left: 4px solid #00cc99;
+  margin-bottom: 20px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.event-box:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  background-image: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://cdn.mos.cms.futurecdn.net/cRFFW6JNXqEtkBA3P2U68m.jpg');
+  border-left: 4px solid #00ffcc;
+}
+
+.event-box:hover .event-details {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Event Details */
+.event-details {
+  padding: 20px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Title and Info */
+.event-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #00ffcc;
+  margin-bottom: 12px;
+}
+
+.event-info span {
+  display: block;
+  font-size: 14px;
+  color: #b0b0b0;
+  margin-bottom: 4px;
+}
+
+/* Match Status */
+.event-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.event-match-status {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: #444;
+  border: 1px solid #666;
+  color: white;
+}
+
+.event-matched {
+  background-color: #4caf50;
+  border-color: #81c784;
+}
+
+.event-unmatched {
+  background-color: #ff4081;
+  border-color: #ff79a8;
+}
+
+.no-matches {
+  text-align: center;
+  color: #ccc;
+  margin-top: 30px;
+}
+{% endblock styles %}
+
+{% block body %}
+<div class="tab-container">
+  <div class="tab-header">
+    <button class="tab-link active" onclick="openTab(event, 'upcoming')">Upcoming Matches</button>
+    <button class="tab-link" onclick="openTab(event, 'completed')">Completed Matches</button>
+  </div>
+
+  <div id="upcoming" class="tab-content" style="display: block;">
+    <h2>Upcoming Matches</h2>
+    {% if upcoming_matches %}
+      {% for event in upcoming_matches %}
+      <a href="/event/{{ event.id }}/" style="text-decoration: none; color: inherit;">
+        <div class="event-box">
+          <div class="event-details">
+            <div class="event-status">
+              <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
+                {% if event.is_match %}Ready for Battle{% else %}Waiting for Opponents{% endif %}
+              </span>
+            </div>
+            <div class="event-title">{{ event.game }}</div>
+            <div class="event-info">
+              <span>Event ID: {{ event.id }}</span>
+              <span>Created by: {{ event.user }}</span>
+              <span>Match type: {{ event.match_type }}</span>
+              <span>Amount: {{ event.amount }}</span>
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <p class="no-matches">No upcoming matches found.</p>
+    {% endif %}
+  </div>
+
+  <div id="completed" class="tab-content">
+    <h2>Completed Matches</h2>
+    {% if completed_matches %}
+      {% for event in completed_matches %}
+      <a href="/event/{{ event.id }}/" style="text-decoration: none; color: inherit;">
+        <div class="event-box">
+          <div class="event-details">
+            <div class="event-status">
+              <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
+                {% if event.is_match %}Completed{% endif %}
+              </span>
+            </div>
+            <div class="event-title">{{ event.game }}</div>
+            <div class="event-info">
+              <span>Event ID: {{ event.id }}</span>
+              <span>Created by: {{ event.user }}</span>
+              <span>Match type: {{ event.match_type }}</span>
+              <span>Amount: {{ event.amount }}</span>
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <p class="no-matches">No completed matches found.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock body %}
+
+{% block scripts %}
+function openTab(event, tabName) {
+  var i, tabContent, tabLinks;
+  tabContent = document.getElementsByClassName("tab-content");
+  for (i = 0; i < tabContent.length; i++) {
+    tabContent[i].style.display = "none";
+  }
+  tabLinks = document.getElementsByClassName("tab-link");
+  for (i = 0; i < tabLinks.length; i++) {
+    tabLinks[i].classList.remove("active");
+  }
+  document.getElementById(tabName).style.display = "block";
+  event.currentTarget.classList.add("active");
+}
+{% endblock scripts %}

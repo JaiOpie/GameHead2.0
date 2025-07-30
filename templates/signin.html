@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Sign In</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e1e2f;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .signin-container {
+      width: 360px;
+      background-color: #2a2a40;
+      border-radius: 12px;
+      padding: 30px 24px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .signin-container h2 {
+      text-align: center;
+      color: #00ffcc;
+      margin-bottom: 24px;
+      font-size: 22px;
+    }
+
+    .signin-container input[type="text"],
+    .signin-container input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background-color: #1e1e2f;
+      color: #ffffff;
+      font-size: 14px;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    .signin-container input[type="text"]::placeholder,
+    .signin-container input[type="password"]::placeholder {
+      color: #bbbbbb;
+    }
+
+    .signin-container input:focus {
+      outline: none;
+      border-color: #00cc99;
+      box-shadow: 0 0 0 2px rgba(0, 204, 153, 0.3);
+    }
+
+    .signin-container button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: #00cc66;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .signin-container button[type="submit"]:hover {
+      background-color: #00a653;
+    }
+
+    .signin-container p {
+      text-align: center;
+      color: #ccc;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .signin-container p a {
+      color: #00ffcc;
+      text-decoration: none;
+    }
+
+    .signin-container p a:hover {
+      text-decoration: underline;
+    }
+
+    .message-container {
+      margin-bottom: 16px;
+    }
+
+    .message-container ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .message-container li {
+      background-color: #ff4d4d;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .password-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .password-wrapper input[type="password"],
+    .password-wrapper input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      padding-right: 48px; /* space for icon */
+      margin-bottom: 16px;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background-color: #1e1e2f;
+      color: #ffffff;
+      font-size: 14px;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+
+    .password-wrapper button {
+      position: absolute;
+      right: 16px;
+      top: 38%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #00cc99;
+      cursor: pointer;
+      padding: 0;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="signin-container">
+    <h2>Sign In to Your Arena</h2>
+    <form action="" method="POST">
+      {% csrf_token %}
+
+      <div class="message-container">
+        {% if messages %}
+          <ul>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <input type="text" name="username" placeholder="Username" required>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" placeholder="Password" required>
+        <button type="button" id="togglePassword" aria-label="Toggle password visibility">
+          <i class="fa-solid fa-eye" id="eyeIcon"></i>
+        </button>
+      </div>
+
+      <button type="submit">Start Playing</button>
+    </form>
+    <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+  </div>
+
+  <script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const eyeIcon = document.querySelector('#eyeIcon');
+
+    togglePassword.addEventListener('click', function () {
+      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', type);
+      eyeIcon.classList.toggle('fa-eye');
+      eyeIcon.classList.toggle('fa-eye-slash');
+    });
+  </script>
+</body>
+</html>
