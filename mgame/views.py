@@ -37,7 +37,7 @@ def signup(request):
                 user_model = User.objects.get(username=username)
                 new_profile = Profile.objects.create(user=user_model)
                 new_profile.save()
-                return redirect('dashboard.html')
+                return redirect('dashboard')
     else:
         return render(request,'signup.html')
 
