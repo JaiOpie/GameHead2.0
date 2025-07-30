@@ -20,7 +20,7 @@ A Django-based web application that allows gamers to create, join, and manage co
 
 - **Backend:** Django (Python)
 - **Frontend:** HTML, CSS (Dark-themed UI)
-- **Database:** SQLite (Default Django DB)
+- **Database:** PostgreSQL
 - **Authentication:** Django’s built-in auth system
 
 ---
