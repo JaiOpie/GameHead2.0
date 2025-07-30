@@ -6,12 +6,32 @@ from django.contrib.auth.models import User, auth
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import Http404
+from django.contrib.auth.models import AnonymousUser
 
 
 # Create your views here.
 
 def index(request):
     return render(request,"index.html")
+
+
+
+def guest_dashboard(request, token):
+    # Replace with your actual secret token
+    SECRET_TOKEN = "df15d893-35e5-43bd-98e2-efd3e64300a7"
+
+    if token != SECRET_TOKEN:
+        raise Http404("Invalid access token.")
+
+    # Use public or sample data (or all events, as you prefer)
+    game = event.objects.filter(is_match=False)
+
+    context = {
+        'user_object': None,
+        'gamedata': game,
+    }
+    return render(request, "dashboard.html", context)
+
 
 def signup(request):
     if request.method == 'POST':

@@ -134,7 +134,9 @@
     <!-- Center: Nav links -->
     <div class="navbar-links">
       <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}">Home</a>
-      <a href="{% url 'profile' user_object.id %}" class="{% if request.path|slice:":9" == '/profile/' %}active{% endif %}">Profile</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'profile' user.id %}" class="{% if request.path|slice:":9" == '/profile/' %}active{% endif %}">Profile</a>
+      {% endif %}
     </div>
 
     <!-- Right: Profile Dropdown -->
