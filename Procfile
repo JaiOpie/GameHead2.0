@@ -1,1 +1,1 @@
-web: gamify.wsgi
+web: gunicorn gamify.wsgi
