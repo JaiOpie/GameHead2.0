@@ -309,27 +309,41 @@ body {
 {% endif %}
 
 <div class="container">
+  <form method="GET" action="{% url 'dashboard' %}" style="margin-bottom: 20px;">
+    <input
+      type="text"
+      name="q"
+      value="{{ request.GET.q }}"
+      placeholder="Search events by ID, name, creator, etc."
+      style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background-color: #1e1e2f; color: #fff;"
+    >
+  </form>
+
   <div class="event-container">
-    {% for event in gamedata %}
-    <a href="/event/{{ event.id }}/">
-      <div class="event-box">
-        <div class="event-details">
-          <div class="event-status">
-            <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
-              {% if not event.is_match %}Ready to match{% endif %}
-            </span>
+       {% if gamedata %}
+      {% for event in gamedata %}
+        <a href="{% url 'event_detail' event.id %}">
+          <div class="event-box">
+            <div class="event-details">
+              <div class="event-status">
+                <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
+                  {% if event.is_match %}Matched{% else %}Waiting{% endif %}
+                </span>
+              </div>
+              <div class="event-title">{{ event.game }}</div>
+              <div class="event-info">
+                <span>Event ID: {{ event.id }}</span>
+                <span>Created by: {{ event.user.username }}</span>
+                <span>Match type: {{ event.match_type }}</span>
+                <span>Amount: {{ event.amount }}</span>
+              </div>
+            </div>
           </div>
-          <div class="event-title">{{ event.game }}</div>
-          <div class="event-info">
-            <span>Event ID: {{ event.id }}</span>
-            <span>Created by: {{ event.user }}</span>
-            <span>Match type: {{ event.match_type }}</span>
-            <span>Amount: {{ event.amount }}</span>
-          </div>
-        </div>
-      </div>
-    </a>
-    {% endfor %}
+        </a>
+      {% endfor %}
+    {% else %}
+      <p style="text-align: center; color: #aaa;">No matching events found.</p>
+    {% endif %}
   </div>
 </div>
 
@@ -404,6 +418,31 @@ body {
   notif.style.opacity = 0;
   setTimeout(() => notif.style.display = "none", 300);
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.querySelector('input[name="q"]');
+  const container = document.querySelector('.event-container');
+
+  let timeout = null;
+
+  searchInput.addEventListener('keyup', function () {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      const query = this.value;
+
+      fetch(`/search-events/?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          container.innerHTML = data.html;
+        })
+        .catch(error => {
+          console.error('Error fetching search results:', error);
+        });
+    }, 300); // debounce
+  });
+});
+</script>
+
 
 </script>
 {% endblock body %}

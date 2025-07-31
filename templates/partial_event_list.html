@@ -1,0 +1,22 @@
+{% for event in gamedata %}
+<a href="{% url 'event_detail' event.id %}">
+  <div class="event-box">
+    <div class="event-details">
+      <div class="event-status">
+        <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
+          {% if event.is_match %}Matched{% else %}Waiting{% endif %}
+        </span>
+      </div>
+      <div class="event-title">{{ event.game }}</div>
+      <div class="event-info">
+        <span>Event ID: {{ event.id }}</span>
+        <span>Created by: {{ event.user.username }}</span>
+        <span>Match type: {{ event.match_type }}</span>
+        <span>Amount: {{ event.amount }}</span>
+      </div>
+    </div>
+  </div>
+</a>
+{% empty %}
+<p style="text-align: center; color: #aaa;">No matching events found.</p>
+{% endfor %}

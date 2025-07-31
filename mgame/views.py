@@ -4,9 +4,11 @@ from django.contrib import messages
 from django.http import HttpResponse,JsonResponse
 from django.contrib.auth.models import User, auth
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.http import Http404
 from django.contrib.auth.models import AnonymousUser
+from django.db.models import Q
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 
 # Create your views here.
@@ -63,16 +65,51 @@ def signup(request):
 
 
 
+@login_required(login_url='signin')
+def search_events(request):
+    query = request.GET.get('q', '')
+    user = request.user
+
+    if query:
+        events = event.objects.filter(
+            Q(id__icontains=query) |
+            Q(game__icontains=query) |
+            Q(match_type__icontains=query) |
+            Q(user__username__icontains=query) |
+            Q(amount__icontains=query),
+            is_match=False
+        ).exclude(user=user)
+    else:
+        events = event.objects.filter(is_match=False).exclude(user=user)
+
+    html = render_to_string('partial_event_list.html', {'gamedata': events}, request=request)
+    return JsonResponse({'html': html})
+
+
 
 @login_required(login_url='signin')
 def dashboard(request):
-    user_object = User.objects.get(username=request.user.username)
-    game=event.objects.filter(is_match=False).exclude(user=request.user)
+    user_object = request.user
+    query = request.GET.get('q')
+
+    if query:
+        game = event.objects.filter(
+            Q(id__icontains=query) |
+            Q(game__icontains=query) |
+            Q(match_type__icontains=query) |
+            Q(user__username__icontains=query) |
+            Q(amount__icontains=query),
+            is_match=False
+        ).exclude(user=request.user)
+    else:
+        game = event.objects.filter(is_match=False).exclude(user=request.user)
+
     context = {
-    'user_object': user_object,
-    'gamedata': game,
+        'user_object': user_object,
+        'gamedata': game,
     }
-    return render(request,"dashboard.html",context)
+    return render(request, "dashboard.html", context)
+
 
 @login_required(login_url='signin')
 def profile(request, pk):
