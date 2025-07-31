@@ -1,3 +1,4 @@
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -172,6 +173,45 @@
 
       <button type="submit">Start Playing</button>
     </form>
+    <!-- Divider -->
+<div style="text-align: center; margin: 16px 0; color: #999;">or</div>
+
+<!-- Google Login Button -->
+<a href="{% provider_login_url 'google' %}" style="text-decoration: none;">
+  <button type="button" style="
+    width: 100%;
+    background: #ffffff;
+    color: #444;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+  ">
+    <!-- Google Icon -->
+    <svg width="20" height="20" viewBox="0 0 48 48">
+      <defs>
+        <path id="a" d="M44.5 20H24v8.5h11.8C34.6 33.4 30 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l6.2-6.2C34.1 5.3 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c11.2 0 20.6-8.1 20.6-21 0-1.4-.1-2.6-.3-4z"/>
+      </defs>
+      <clipPath id="b">
+        <use xlink:href="#a" overflow="visible"/>
+      </clipPath>
+      <path fill="#fbbc05" d="M0 37V11l17 13z" clip-path="url(#b)"/>
+      <path fill="#ea4335" d="M0 11l17 13 7-6.1L48 14V0H0z" clip-path="url(#b)"/>
+      <path fill="#34a853" d="M0 37l30-23 7.9 1L48 0v48H0z" clip-path="url(#b)"/>
+      <path fill="#4285f4" d="M48 48L17 24l-4-3 35-10z" clip-path="url(#b)"/>
+    </svg>
+    Sign in with Google
+  </button>
+</a>
+
     <p>Don't have an account? <a href="/signup">Sign Up</a></p>
   </div>
 
@@ -187,5 +227,6 @@
       eyeIcon.classList.toggle('fa-eye-slash');
     });
   </script>
+
 </body>
 </html>

@@ -5,10 +5,13 @@ from django.http import HttpResponse,JsonResponse
 from django.contrib.auth.models import User, auth
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from allauth.account.signals import user_signed_up
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import Profile
 
 
 # Create your views here.
@@ -114,6 +117,8 @@ def dashboard(request):
 @login_required(login_url='signin')
 def profile(request, pk):
     user_object = User.objects.get(id=pk)
+    Profile.objects.get_or_create(user=user_object)
+
     user_profile = Profile.objects.get(user=user_object)
     ematch=match.objects.all()
     upcoming_matches=[]
@@ -259,6 +264,6 @@ def complete_event(request, event_id):
     return redirect('/dashboard')
 
 
-
-
-
+@receiver(user_signed_up)
+def create_user_profile(request, user, **kwargs):
+    Profile.objects.create(user=user)

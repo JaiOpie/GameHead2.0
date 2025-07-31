@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,include
 from mgame import views
 
 urlpatterns = [
@@ -32,6 +32,8 @@ urlpatterns = [
     path('complete_event/<int:event_id>/', views.complete_event, name='complete_event'),
     path('dashboard/guest/<str:token>/', views.guest_dashboard, name='guest_dashboard'),
     path('search-events/', views.search_events, name='search_events'),
+    path('accounts/', include('allauth.urls')),  # ← This enables Google login
+
 
 
 ]

@@ -1,0 +1,86 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign in with Google – HeadBot</title>
+  <style>
+    body {
+      background: #111827;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #1f2937;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    p {
+      margin-bottom: 30px;
+      color: #d1d5db;
+    }
+
+    .button {
+      padding: 12px 24px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .continue-btn {
+      background-color: #db4437;
+      color: white;
+    }
+
+    .cancel-btn {
+      background-color: #374151;
+      color: #d1d5db;
+    }
+
+    .cancel-btn:hover {
+      background-color: #4b5563;
+    }
+
+    .continue-btn:hover {
+      background-color: #c1351d;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Continue with Google</h2>
+    <p>
+      You're about to sign in to <strong>HeadToHead</strong> using your Google account.
+    </p>
+
+    <form method="post" action="{{ action_url }}" style="display: inline;">
+      {% csrf_token %}
+      <button type="submit" class="button continue-btn">{% trans "Continue" %}</button>
+    </form>
+
+    <a href="/" style="text-decoration: none;">
+      <button class="button cancel-btn">Cancel</button>
+    </a>
+  </div>
+
+</body>
+</html>
