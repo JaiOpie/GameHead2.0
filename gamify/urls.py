@@ -30,9 +30,10 @@ urlpatterns = [
     path('event/<int:event_id>/',views.event_detail, name='event_detail'),
     path('event/<int:event_id>/update-room-id/', views.update_room_id, name='update_room_id'),
     path('complete_event/<int:event_id>/', views.complete_event, name='complete_event'),
-    path('dashboard/guest/<str:token>/', views.guest_dashboard, name='guest_dashboard'),
     path('search-events/', views.search_events, name='search_events'),
-    path('accounts/', include('allauth.urls')),  # ← This enables Google login
+    path('accounts/', include('allauth.urls')),
+    path("demo-login/", views.demo_login, name="demo_login"),
+
 
 
 

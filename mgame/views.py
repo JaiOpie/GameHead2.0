@@ -12,6 +12,8 @@ from allauth.account.signals import user_signed_up
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from .models import Profile
+from django.contrib.auth import login
+
 
 
 # Create your views here.
@@ -21,21 +23,11 @@ def index(request):
 
 
 
-def guest_dashboard(request, token):
-    # Replace with your actual secret token
-    SECRET_TOKEN = "df15d893-35e5-43bd-98e2-efd3e64300a7"
-
-    if token != SECRET_TOKEN:
-        raise Http404("Invalid access token.")
-
-    # Use public or sample data (or all events, as you prefer)
-    game = event.objects.filter(is_match=False)
-
-    context = {
-        'user_object': None,
-        'gamedata': game,
-    }
-    return render(request, "dashboard.html", context)
+def demo_login(request):
+    user = User.objects.get(username='demo')
+    user.backend = 'django.contrib.auth.backends.ModelBackend'
+    login(request, user)
+    return redirect('/dashboard')
 
 
 def signup(request):
