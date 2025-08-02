@@ -109,9 +109,7 @@ def dashboard(request):
 @login_required(login_url='signin')
 def profile(request, pk):
     user_object = User.objects.get(id=pk)
-    Profile.objects.get_or_create(user=user_object)
-
-    user_profile = Profile.objects.get(user=user_object)
+    user_profile = user_object.profile
     ematch=match.objects.all()
     upcoming_matches=[]
     completed_matches=[]
@@ -256,6 +254,6 @@ def complete_event(request, event_id):
     return redirect('/dashboard')
 
 
-@receiver(user_signed_up)
-def create_user_profile(request, user, **kwargs):
-    Profile.objects.create(user=user)
+# @receiver(user_signed_up)
+# def create_user_profile(request, user, **kwargs):
+#     Profile.objects.create(user=user)
