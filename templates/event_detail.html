@@ -245,11 +245,8 @@ button.complete-button:hover {
       <tr>
         <th>Game:</th>
         <td>
-{% if event.game.image %}
-  <img class="game-logo" src="{% static event.game.image %}" alt="{{ event.game.name }}">
-{% else %}
-  <img class="game-logo" src="{% static 'default_game.png' %}" alt="Default Game Logo">
-{% endif %}
+<img class="game-logo" src="{% static event.game.image %}" alt="{{ event.game.name }}">
+
         </td>
       </tr>
       <tr>
@@ -340,24 +337,6 @@ button.complete-button:hover {
 
 {% block scripts %}
 <script>
-
-function tryOtherFormats(img, gameName) {
-  const extensions = ['.jpg', '.jpeg', '.png'];
-  let index = 0;
-
-  function tryNext() {
-    if (index >= extensions.length) {
-      img.src = "{% static 'default_game.png' %}";
-      return;
-    }
-    img.src = "{% static 'game_images/' %}" + gameName + extensions[index++];
-    img.onerror = tryNext;
-  }
-
-  tryNext();
-}
-
-
 
 function getCSRFToken() {
   return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
