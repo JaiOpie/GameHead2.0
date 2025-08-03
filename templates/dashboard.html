@@ -297,53 +297,27 @@ body {
 {% endblock styles %}
 
 {% block body %}
-
 {% if messages %}
-<div id="notification" class="notification">
-  <span id="notif-close" style="cursor:pointer; margin-left: 10px;">&times;</span>
-  {% for message in messages %}
-    <p>{{ message }}</p>
-  {% endfor %}
-</div>
-
+  <div id="notification" class="notification">
+    <span id="notif-close" style="cursor:pointer; margin-left: 10px;">&times;</span>
+    {% for message in messages %}
+      <p>{{ message }}</p>
+    {% endfor %}
+  </div>
 {% endif %}
 
 <div class="container">
-  <form method="GET" action="{% url 'dashboard' %}" style="margin-bottom: 20px;">
+  <form method="GET" style="margin-bottom: 20px;">
     <input
       type="text"
       name="q"
-      value="{{ request.GET.q }}"
       placeholder="Search events by ID, name, creator, etc."
       style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background-color: #1e1e2f; color: #fff;"
     >
   </form>
 
-  <div class="event-container">
-       {% if gamedata %}
-      {% for event in gamedata %}
-        <a href="{% url 'event_detail' event.id %}">
-          <div class="event-box">
-            <div class="event-details">
-              <div class="event-status">
-                <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
-                  {% if event.is_match %}Matched{% else %}Waiting{% endif %}
-                </span>
-              </div>
-              <div class="event-title">{{ event.game }}</div>
-              <div class="event-info">
-                <span>Event ID: {{ event.id }}</span>
-                <span>Created by: {{ event.user.username }}</span>
-                <span>Match type: {{ event.match_type }}</span>
-                <span>Amount: {{ event.amount }}</span>
-              </div>
-            </div>
-          </div>
-        </a>
-      {% endfor %}
-    {% else %}
-      <p style="text-align: center; color: #aaa;">No matching events found.</p>
-    {% endif %}
+  <div class="event-container" id="event-list-container">
+    <p style="text-align: center; color: #aaa;">Loading events...</p>
   </div>
 </div>
 
@@ -358,12 +332,16 @@ body {
   <div class="modal-content">
     <span class="close-button" onclick="closeModal()">&times;</span>
     <h2>Add New Event</h2>
-    <form action="{% url 'addevent' %}" method="POST">
-      {% csrf_token %}
-      <div class="form-group">
-        <label for="gamename">Game Name:</label>
-        <input type="text" id="gamename" name="gamename" required placeholder="Enter the game name">
-      </div>
+    <form id="addEventForm">
+      <div id="event-error" style="display:none; background-color:#ff4d4d; padding:8px; border-radius:6px; margin-bottom:12px; color:white; font-size:14px;"></div>
+      <div id="event-success" style="display:none; background-color:#00cc66; padding:8px; border-radius:6px; margin-bottom:12px; color:white; font-size:14px;"></div>
+
+<div class="form-group">
+  <label for="gameselect">Game:</label>
+  <select id="gameselect" name="game" required>
+    <option value="" disabled selected>Select a game</option>
+  </select>
+</div>
       <div class="form-group">
         <label for="ingamename">In-Game Name:</label>
         <input type="text" id="ingamename" name="ingamename" required placeholder="Enter your in-game name">
@@ -390,59 +368,166 @@ body {
   </div>
 </div>
 
-
 <script>
-  const modal = document.getElementById("addEventModal");
+const modal = document.getElementById("addEventModal");
 
-  function openModal() {
-    modal.style.display = "flex";
+function openModal() {
+  modal.style.display = "flex";
+}
+
+function closeModal() {
+  modal.style.display = "none";
+}
+
+document.querySelector(".add-button").addEventListener("click", function (e) {
+  e.preventDefault();
+  openModal();
+});
+
+window.addEventListener("click", function (event) {
+  if (event.target === modal) {
+    closeModal();
   }
+});
 
-  function closeModal() {
-    modal.style.display = "none";
-  }
-
-  document.querySelector(".add-button").addEventListener("click", function (e) {
-    e.preventDefault();
-    openModal();
-  });
-
-  window.addEventListener("click", function (event) {
-    if (event.target === modal) {
-      closeModal();
-    }
-  });
-
-  document.getElementById("notif-close")?.addEventListener("click", () => {
+document.getElementById("notif-close")?.addEventListener("click", () => {
   const notif = document.getElementById("notification");
   notif.style.opacity = 0;
   setTimeout(() => notif.style.display = "none", 300);
 });
 
+function renderEventList(events, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  if (!events.length) {
+    container.innerHTML = `<p style="text-align: center; color: #aaa;">No matching events found.</p>`;
+    return;
+  }
+
+  for (const event of events) {
+    const isMatched = event.is_match;
+    const matchStatusClass = isMatched ? "event-matched" : "event-unmatched";
+    const matchStatusText = isMatched ? "Matched" : "Waiting";
+
+    const username = event.user?.username || "Unknown";
+
+    container.innerHTML += `
+      <a href="/event/${event.id}/">
+        <div class="event-box">
+          <div class="event-details">
+            <div class="event-status">
+              <span class="event-match-status ${matchStatusClass}">
+                ${matchStatusText}
+              </span>
+            </div>
+            <div class="event-title">${event.game_name}</div>
+            <div class="event-info">
+              <span>Event ID: ${event.id}</span>
+              <span>Created by: ${username}</span>
+              <span>Match type: ${event.match_type}</span>
+              <span>Amount: ₹${event.amount}</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    `;
+  }
+}
+
+
+ async function populateGameDropdown() {
+    const dropdown = document.getElementById("gamename");
+    try {
+      const response = await fetch("/api/games/")
+  .then(res => res.json())
+  .then(games => {
+    const select = document.getElementById("gameselect");
+    games.forEach(game => {
+      const option = document.createElement("option");
+      option.value = game.id;                // submit game.id
+      option.textContent = game.name;        // show game.name
+      select.appendChild(option);
+    });
+  });
+      if (!response.ok) throw new Error("Failed to fetch games");
+      const games = await response.json();
+
+      dropdown.innerHTML = `<option value="" disabled selected>Select a game</option>`;
+      games.forEach(game => {
+        dropdown.innerHTML += `<option value="${game.name}">${game.name}</option>`;
+      });
+    } catch (error) {
+      console.error("Error loading games:", error);
+      dropdown.innerHTML = `<option value="" disabled>Error loading games</option>`;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    fetchAndRenderEvents();  // your existing logic
+    populateGameDropdown();  // <-- add this
+  });
+
+function fetchAndRenderEvents(query = '') {
+  const url = query ? `/api/events/?q=${encodeURIComponent(query)}` : `/api/events/`;
+  fetch(url)
+    .then(res => res.json())
+    .then(data => renderEventList(data, 'event-list-container'))
+    .catch(err => {
+      console.error('Error loading events:', err);
+      document.getElementById('event-list-container').innerHTML =
+        `<p style="text-align: center; color: #aaa;">Failed to load events.</p>`;
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  fetchAndRenderEvents();
+
   const searchInput = document.querySelector('input[name="q"]');
-  const container = document.querySelector('.event-container');
-
-  let timeout = null;
-
-  searchInput.addEventListener('keyup', function () {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      const query = this.value;
-
-      fetch(`/search-events/?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          container.innerHTML = data.html;
-        })
-        .catch(error => {
-          console.error('Error fetching search results:', error);
-        });
-    }, 300); // debounce
+  searchInput.addEventListener("keyup", function () {
+    const query = this.value;
+    fetchAndRenderEvents(query);
   });
 });
-</script>
 
+document.getElementById("addEventForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
 
+  const game = parseInt(document.getElementById("gameselect").value);
+  const user1ingame = document.getElementById("ingamename").value;
+  const match_type = document.getElementById("matchtype").value;
+  const amount = document.getElementById("amount").value;
+
+  const errorBox = document.getElementById("event-error");
+  const successBox = document.getElementById("event-success");
+
+  errorBox.style.display = "none";
+  successBox.style.display = "none";
+
+  try {
+    const response = await fetch("/api/events/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({ game, user1ingame, match_type, amount })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      successBox.textContent = "Event created successfully!";
+      successBox.style.display = "block";
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      errorBox.textContent = data.detail || "Failed to create event.";
+      errorBox.style.display = "block";
+    }
+  } catch (err) {
+    errorBox.textContent = "Something went wrong. Try again.";
+    errorBox.style.display = "block";
+  }
+});
 </script>
 {% endblock body %}

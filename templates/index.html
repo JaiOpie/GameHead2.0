@@ -103,20 +103,23 @@
       border: 1px solid #00cc66;
       border-radius: 6px;
       margin-top: 5px;
-      min-width: 120px;
+      min-width: 160px;
       z-index: 1000;
     }
 
-    .dropdown-menu a {
+    .dropdown-menu a,
+    .dropdown-menu div {
       color: white;
       padding: 12px;
       display: block;
       text-decoration: none;
       border-bottom: 1px solid #555;
+      text-align: center;
     }
 
     .dropdown-menu a:hover {
       background-color: #00cc66;
+      color: black;
     }
 
     .dropdown-menu a:last-child {
@@ -128,10 +131,8 @@
 </head>
 <body>
   <div class="navbar">
-    <!-- Left: Brand -->
     <div class="brand">HeadToHead</div>
 
-    <!-- Center: Nav links -->
     <div class="navbar-links">
       <a href="/dashboard" class="{% if request.path == '/dashboard' %}active{% endif %}">Home</a>
       {% if user.is_authenticated %}
@@ -139,16 +140,20 @@
       {% endif %}
     </div>
 
-    <!-- Right: Profile Dropdown -->
+    {% if user.is_authenticated %}
     <div class="profile-dropdown">
       <div class="profile-button" onclick="toggleDropdown()">
         <img src="{% static 'users.png' %}" alt="Avatar">
-        {{ user_object.username }} &#x25BC;
+        {{ user.username }} &#x25BC;
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
+        <div style="color: #00ffcc; font-weight: bold;">
+          💰 ₹<span id="walletAmount">0.00</span>
+        </div>
         <a href="/logout">Logout</a>
       </div>
     </div>
+    {% endif %}
   </div>
 
   {% block body %}{% endblock body %}
@@ -160,7 +165,7 @@
       menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
 
-    // Close dropdown on outside click
+    // Close dropdown if clicked outside
     window.addEventListener("click", function(event) {
       if (!event.target.closest(".profile-dropdown")) {
         const menu = document.getElementById("dropdownMenu");
@@ -168,7 +173,30 @@
       }
     });
 
-    {% block scripts %}{% endblock scripts %}
+    // Fetch wallet balance
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch("/api/wallet/balance", {
+        headers: {
+          "Accept": "application/json"
+        },
+        credentials: "include"
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Not authenticated or server error");
+        return response.json();
+      })
+      .then(data => {
+        if (data.balance !== undefined) {
+          document.getElementById("walletAmount").textContent = parseFloat(data.balance).toFixed(2);
+        }
+      })
+      .catch(err => {
+        console.warn("Wallet fetch failed:", err);
+        document.getElementById("walletAmount").textContent = "0.00";
+      });
+    });
   </script>
+
+  {% block scripts %}{% endblock scripts %}
 </body>
 </html>

@@ -12,12 +12,34 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
+class Wallet(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(default=0.00, max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.user.username}'s Wallet - ₹{self.balance}"
+
+class Transaction(models.Model):
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    type = models.CharField(max_length=10, choices=[('credit', 'Credit'), ('debit', 'Debit')])
+    description = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.type.upper()} ₹{self.amount} - {self.description}"
 
 
+class Game(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    genre = models.CharField(max_length=50, default="Battle Royale")
+    image = models.ImageField(upload_to='game_images/', blank=True, null=True)  # Image field
+    def __str__(self):
+        return self.name
 
 
 class event(models.Model):
-    game=models.CharField(max_length=100)
+    old_game=models.CharField(max_length=100,default="Game")
     user=models.ForeignKey(User,null=True,on_delete=models.CASCADE,related_name="createuser")
     user1ingame=models.CharField(null=True,blank=True,max_length=10)
     user2ingame=models.CharField(null=True,blank=True,max_length=10)
@@ -26,6 +48,7 @@ class event(models.Model):
     is_completed=models.BooleanField(default=False)
     room_id=models.CharField(null=True,blank=True,max_length=20)
     is_match=models.BooleanField(default=False)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, null=True, blank=True)  # New FK field
 
 
 

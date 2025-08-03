@@ -147,74 +147,92 @@
 
   <div id="upcoming" class="tab-content" style="display: block;">
     <h2>Upcoming Matches</h2>
-    {% if upcoming_matches %}
-      {% for event in upcoming_matches %}
-      <a href="/event/{{ event.id }}/" style="text-decoration: none; color: inherit;">
-        <div class="event-box">
-          <div class="event-details">
-            <div class="event-status">
-              <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
-                {% if event.is_match %}Ready for Battle{% else %}Waiting for Opponents{% endif %}
-              </span>
-            </div>
-            <div class="event-title">{{ event.game }}</div>
-            <div class="event-info">
-              <span>Event ID: {{ event.id }}</span>
-              <span>Created by: {{ event.user }}</span>
-              <span>Match type: {{ event.match_type }}</span>
-              <span>Amount: {{ event.amount }}</span>
-            </div>
-          </div>
-        </div>
-      </a>
-      {% endfor %}
-    {% else %}
-      <p class="no-matches">No upcoming matches found.</p>
-    {% endif %}
+    <div id="upcoming-events-container">
+      <p class="no-matches">Loading...</p>
+    </div>
   </div>
 
   <div id="completed" class="tab-content">
     <h2>Completed Matches</h2>
-    {% if completed_matches %}
-      {% for event in completed_matches %}
-      <a href="/event/{{ event.id }}/" style="text-decoration: none; color: inherit;">
-        <div class="event-box">
-          <div class="event-details">
-            <div class="event-status">
-              <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
-                {% if event.is_match %}Completed{% endif %}
-              </span>
-            </div>
-            <div class="event-title">{{ event.game }}</div>
-            <div class="event-info">
-              <span>Event ID: {{ event.id }}</span>
-              <span>Created by: {{ event.user }}</span>
-              <span>Match type: {{ event.match_type }}</span>
-              <span>Amount: {{ event.amount }}</span>
-            </div>
-          </div>
-        </div>
-      </a>
-      {% endfor %}
-    {% else %}
-      <p class="no-matches">No completed matches found.</p>
-    {% endif %}
+    <div id="completed-events-container">
+      <p class="no-matches">Loading...</p>
+    </div>
   </div>
 </div>
 {% endblock body %}
 
 {% block scripts %}
+<script>
+const userId = {{ user.id }};
+
 function openTab(event, tabName) {
-  var i, tabContent, tabLinks;
-  tabContent = document.getElementsByClassName("tab-content");
-  for (i = 0; i < tabContent.length; i++) {
-    tabContent[i].style.display = "none";
-  }
-  tabLinks = document.getElementsByClassName("tab-link");
-  for (i = 0; i < tabLinks.length; i++) {
-    tabLinks[i].classList.remove("active");
-  }
+  const tabContents = document.getElementsByClassName("tab-content");
+  const tabLinks = document.getElementsByClassName("tab-link");
+
+  Array.from(tabContents).forEach(tab => tab.style.display = "none");
+  Array.from(tabLinks).forEach(link => link.classList.remove("active"));
+
   document.getElementById(tabName).style.display = "block";
   event.currentTarget.classList.add("active");
 }
+
+function renderEvents(events, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  if (!events.length) {
+    container.innerHTML = `<p class="no-matches">No matches found.</p>`;
+    return;
+  }
+
+  for (const event of events) {
+    const statusClass = event.is_match ? "event-matched" : "event-unmatched";
+    const statusText = event.is_completed
+      ? "Completed"
+      : (event.is_match ? "Ready for Battle" : "Waiting for Opponents");
+
+    container.innerHTML += `
+      <a href="/event/${event.id}/" style="text-decoration: none; color: inherit;">
+        <div class="event-box">
+          <div class="event-details">
+            <div class="event-status">
+              <span class="event-match-status ${statusClass}">
+                ${statusText}
+              </span>
+            </div>
+            <div class="event-title">${event.game_name}</div>
+            <div class="event-info">
+              <span>Event ID: ${event.id}</span>
+              <span>Created by: ${event.user.username}</span>
+              <span>Match type: ${event.match_type}</span>
+              <span>Amount: ₹${event.amount}</span>
+            </div>
+          </div>
+        </div>
+      </a>`;
+  }
+}
+
+function fetchMatches() {
+  fetch(`/api/users/${userId}/events/upcoming/`)
+    .then(res => res.json())
+    .then(data => renderEvents(data, "upcoming-events-container"))
+    .catch(err => {
+      console.error("Error loading upcoming events:", err);
+      document.getElementById("upcoming-events-container").innerHTML =
+        "<p class='no-matches'>Failed to load upcoming events.</p>";
+    });
+
+  fetch(`/api/users/${userId}/events/completed/`)
+    .then(res => res.json())
+    .then(data => renderEvents(data, "completed-events-container"))
+    .catch(err => {
+      console.error("Error loading completed events:", err);
+      document.getElementById("completed-events-container").innerHTML =
+        "<p class='no-matches'>Failed to load completed events.</p>";
+    });
+}
+
+document.addEventListener("DOMContentLoaded", fetchMatches);
+</script>
 {% endblock scripts %}

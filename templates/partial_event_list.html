@@ -1,22 +1,90 @@
-{% for event in gamedata %}
-<a href="{% url 'event_detail' event.id %}">
-  <div class="event-box">
-    <div class="event-details">
-      <div class="event-status">
-        <span class="event-match-status {% if event.is_match %}event-matched{% else %}event-unmatched{% endif %}">
-          {% if event.is_match %}Matched{% else %}Waiting{% endif %}
-        </span>
-      </div>
-      <div class="event-title">{{ event.game }}</div>
-      <div class="event-info">
-        <span>Event ID: {{ event.id }}</span>
-        <span>Created by: {{ event.user.username }}</span>
-        <span>Match type: {{ event.match_type }}</span>
-        <span>Amount: {{ event.amount }}</span>
-      </div>
-    </div>
+{% extends 'index.html' %}
+{% block title %}Dashboard{% endblock title %}
+
+{% block styles %}
+<!-- Retain your styles here or link to CSS if moved -->
+{% endblock styles %}
+
+{% block body %}
+<div class="container">
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Search events by ID, name, creator, etc."
+    style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; background-color: #1e1e2f; color: #fff; margin-bottom: 20px;"
+  >
+
+  <div class="event-container" id="event-list-container">
+    <!-- Events will be dynamically injected here -->
+    <p style="color: #aaa; text-align: center;">Loading events...</p>
   </div>
-</a>
-{% empty %}
-<p style="text-align: center; color: #aaa;">No matching events found.</p>
-{% endfor %}
+</div>
+
+<script>
+function renderEventList(events, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  if (!events.length) {
+    container.innerHTML = `<p style="text-align: center; color: #aaa;">No matching events found.</p>`;
+    return;
+  }
+
+  for (const event of events) {
+    const isMatched = event.is_match;
+    const matchStatusClass = isMatched ? "event-matched" : "event-unmatched";
+    const matchStatusText = isMatched ? "Matched" : "Waiting";
+
+    container.innerHTML += `
+      <a href="/event/${event.id}/">
+        <div class="event-box">
+          <div class="event-details">
+            <div class="event-status">
+              <span class="event-match-status ${matchStatusClass}">
+                ${matchStatusText}
+              </span>
+            </div>
+            <div class="event-title">${event.game}</div>
+            <div class="event-info">
+              <span>Event ID: ${event.id}</span>
+              <span>Created by: ${event.user.username}</span>
+              <span>Match type: ${event.match_type}</span>
+              <span>Amount: ₹${event.amount}</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    `;
+  }
+}
+
+function fetchAndRenderEvents(query = '') {
+  const url = query ? `/api/events/?q=${encodeURIComponent(query)}` : `/api/events/`;
+  fetch(url)
+    .then(res => res.json())
+    .then(data => renderEventList(data, 'event-list-container'))
+    .catch(err => {
+      console.error('Error loading events:', err);
+      document.getElementById('event-list-container').innerHTML =
+        `<p style="text-align: center; color: #aaa;">Failed to load events.</p>`;
+    });
+}
+
+// Initial load
+document.addEventListener("DOMContentLoaded", function () {
+  fetchAndRenderEvents();
+
+  const searchInput = document.getElementById("searchInput");
+  let timeout = null;
+
+  searchInput.addEventListener("keyup", function () {
+    clearTimeout(timeout);
+    const query = this.value;
+
+    timeout = setTimeout(() => {
+      fetchAndRenderEvents(query);
+    }, 300); // Debounce
+  });
+});
+</script>
+{% endblock body %}

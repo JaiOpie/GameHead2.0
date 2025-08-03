@@ -100,8 +100,9 @@
 <body>
   <div class="signup-container">
     <h2>Create Your Account</h2>
-    <form action="" method="POST">
-      {% csrf_token %}
+    <form id="signupForm">
+      <div id="errorBox" style="display:none; background-color:#ff4d4d; padding:10px; border-radius:6px; margin-bottom:16px; color:white; text-align:center;"></div>
+
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>
@@ -124,5 +125,51 @@
     </form>
     <p>Already have an account? <a href="/signin">Sign In</a></p>
   </div>
+
+  <script>
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const email = document.getElementById("email").value;
+      const pass1 = document.getElementById("pass1").value;
+      const pass2 = document.getElementById("pass2").value;
+      const errorBox = document.getElementById("errorBox");
+
+      if (pass1 !== pass2) {
+        errorBox.textContent = "Passwords do not match.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/register/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+            username,
+            email,
+            password: pass1,
+            confirm_password: pass2
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          window.location.href = "/dashboard";
+        } else {
+          errorBox.textContent = data.detail || "Signup failed. Please check your input.";
+          errorBox.style.display = "block";
+        }
+      } catch (error) {
+        errorBox.textContent = "Something went wrong. Try again later.";
+        errorBox.style.display = "block";
+      }
+    });
+  </script>
 </body>
 </html>

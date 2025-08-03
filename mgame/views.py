@@ -8,8 +8,6 @@ from django.http import Http404
 from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from allauth.account.signals import user_signed_up
-from django.dispatch import receiver
 from django.contrib.auth.models import User
 from .models import Profile
 from django.contrib.auth import login
@@ -194,6 +192,8 @@ def event_detail(request, event_id):
     event_obj = event.objects.get(id=event_id)
     user_object = User.objects.get(username=request.user.username)
     match_object = match.objects.get(game_id=event_id)
+    event_obj = get_object_or_404(event, id=event_id)
+    game_image_url = event_obj.game.image.url if event_obj.game.image else None
 
     if request.method == 'POST':
         new_room_id = request.POST.get('new_room_id')
@@ -219,6 +219,7 @@ def event_detail(request, event_id):
         'user1': user1,
         'user2': user2,
         'match': match_object,
+        "game_image_url": game_image_url,
     }
 
     return render(request, 'event_detail.html', context)
@@ -254,6 +255,20 @@ def complete_event(request, event_id):
     return redirect('/dashboard')
 
 
-# @receiver(user_signed_up)
-# def create_user_profile(request, user, **kwargs):
-#     Profile.objects.create(user=user)
+def credit_wallet(user, amount, description="Top-up"):
+    wallet = user.wallet
+    wallet.balance += amount
+    wallet.save()
+    Transaction.objects.create(wallet=wallet, amount=amount, type='credit', description=description)
+
+def debit_wallet(user, amount, description="Game fee"):
+    wallet = user.wallet
+    if wallet.balance >= amount:
+        wallet.balance -= amount
+        wallet.save()
+        Transaction.objects.create(wallet=wallet, amount=amount, type='debit', description=description)
+        return True
+    return False  # Not enough funds
+
+
+
