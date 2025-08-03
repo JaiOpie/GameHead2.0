@@ -22,7 +22,7 @@ def signup_api(request):
     username = request.data.get('username')
     email = request.data.get('email')
     password = request.data.get('password')
-    password2 = request.data.get('password2')
+    password2 = request.data.get('confirm_password')
 
     if password != password2:
         return Response({'error': 'Passwords do not match'}, status=400)
@@ -35,8 +35,12 @@ def signup_api(request):
 
     user = User.objects.create_user(username=username, email=email, password=password)
     Profile.objects.create(user=user)
-    Wallet.objects.create(user=user)
-    return Response({'message': 'User created successfully'})
+    # Wallet.objects.create(user=user)
+    user = authenticate(username=username, password=password)
+    if user:
+        login(request, user)
+
+    return Response({'message': 'User created and logged in successfully'})
 
 
 # Login
