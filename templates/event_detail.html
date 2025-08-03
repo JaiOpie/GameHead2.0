@@ -245,11 +245,12 @@ button.complete-button:hover {
       <tr>
         <th>Game:</th>
         <td>
-{% if game_image_url %}
-  <img class="game-logo" src="{{ game_image_url }}" alt="{{ event.game.name }}">
+{% if event.game.image %}
+  <img class="game-logo" src="{% static event.game.image %}" alt="{{ event.game.name }}">
 {% else %}
   <img class="game-logo" src="{% static 'default_game.png' %}" alt="Default Game Logo">
-{% endif %}        </td>
+{% endif %}
+        </td>
       </tr>
       <tr>
         <th>Match Type:</th>
@@ -339,6 +340,25 @@ button.complete-button:hover {
 
 {% block scripts %}
 <script>
+
+function tryOtherFormats(img, gameName) {
+  const extensions = ['.jpg', '.jpeg', '.png'];
+  let index = 0;
+
+  function tryNext() {
+    if (index >= extensions.length) {
+      img.src = "{% static 'default_game.png' %}";
+      return;
+    }
+    img.src = "{% static 'game_images/' %}" + gameName + extensions[index++];
+    img.onerror = tryNext;
+  }
+
+  tryNext();
+}
+
+
+
 function getCSRFToken() {
   return document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
 }

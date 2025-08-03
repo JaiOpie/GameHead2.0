@@ -193,7 +193,7 @@ def event_detail(request, event_id):
     user_object = User.objects.get(username=request.user.username)
     match_object = match.objects.get(game_id=event_id)
     event_obj = get_object_or_404(event, id=event_id)
-    game_image_url = event_obj.game.image.url if event_obj.game and event_obj.game.image else None
+    game_image_url = event_obj.game.image if event_obj.game and event_obj.game.image else None
 
     if request.method == 'POST':
         new_room_id = request.POST.get('new_room_id')

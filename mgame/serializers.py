@@ -55,6 +55,14 @@ class CreditWalletSerializer(serializers.Serializer):
 
 
 class GameSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Game
-        fields = '__all__'
+        fields = ['id', 'name', 'genre', 'image', 'image_url']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(f"/static/game_images/{obj.image}")
+        return None

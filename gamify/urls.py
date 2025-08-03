@@ -49,7 +49,7 @@ urlpatterns = [
 
     # ---------- Router for ModelViewSets ----------
     path("api/", include(router.urls)),
-]
+]+ static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
 
 
 from rest_framework import permissions
@@ -70,7 +70,4 @@ urlpatterns += [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

@@ -39,9 +39,14 @@ def upload_game_image(instance, filename):
 class Game(models.Model):
     name = models.CharField(max_length=100, unique=True)
     genre = models.CharField(max_length=50, default="Battle Royale")
-    image = models.ImageField(upload_to=upload_game_image, blank=True, null=True)  # Image field
+    image = models.CharField(max_length=100, blank=True, null=True)  # store filename like 'bgmi.jpg'
+
     def __str__(self):
         return self.name
+
+    def get_image_url(self):
+        return f"/static/game_images/{self.image}"
+
 
 
 class event(models.Model):
