@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
+import os
 
 # Create your models here.
 
@@ -29,11 +31,15 @@ class Transaction(models.Model):
     def __str__(self):
         return f"{self.type.upper()} ₹{self.amount} - {self.description}"
 
+def upload_game_image(instance, filename):
+    base, ext = os.path.splitext(filename)
+    return f"game_images/{slugify(instance.name)}{ext.lower()}"
+
 
 class Game(models.Model):
     name = models.CharField(max_length=100, unique=True)
     genre = models.CharField(max_length=50, default="Battle Royale")
-    image = models.ImageField(upload_to='game_images/', blank=True, null=True)  # Image field
+    image = models.ImageField(upload_to=upload_game_image, blank=True, null=True)  # Image field
     def __str__(self):
         return self.name
 
