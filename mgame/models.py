@@ -47,8 +47,8 @@ class Game(models.Model):
 class event(models.Model):
     old_game=models.CharField(max_length=100,default="Game")
     user=models.ForeignKey(User,null=True,on_delete=models.CASCADE,related_name="createuser")
-    user1ingame=models.CharField(null=True,blank=True,max_length=10)
-    user2ingame=models.CharField(null=True,blank=True,max_length=10)
+    user1ingame=models.CharField(null=True,blank=True,max_length=200)
+    user2ingame=models.CharField(null=True,blank=True,max_length=200)
     match_type=models.CharField(max_length=50)
     amount=models.IntegerField(default=0)
     is_completed=models.BooleanField(default=False)
