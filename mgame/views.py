@@ -24,7 +24,7 @@ def index(request):
 
 
 def demo_login(request):
-    user = User.objects.get(username='demo')
+    user = User.objects.get(username='test')
     user.backend = 'django.contrib.auth.backends.ModelBackend'
     login(request, user)
     return redirect('/dashboard')
