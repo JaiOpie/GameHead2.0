@@ -25,15 +25,12 @@ A Django-based web application that allows gamers to create, join, and manage co
 
 ---
 
-
----
-
 ## 🧪 How to Run Locally
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/gaming-platform.git
-cd gaming-platform
+git clone https://github.com/JaiOpie/GameHead2.0.git
+cd GameHead2.0
 ```
 ### 2. Set up Environment
 ```bash
@@ -55,7 +52,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 ### 6. Start development server
-```cmd
+```bash
 python manage.py runserver
 ```
 ### 7. Open in browser using the URL
@@ -63,9 +60,3 @@ python manage.py runserver
 [http://localhost:8000](http://localhost:8000)
 
 ### 🕹️ Start your gaming battle now on the ultimate matchmaking platform!
-
-
-
-
-
-
