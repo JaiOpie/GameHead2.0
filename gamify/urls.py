@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from mgame import views  # Template views
-from mgame import api_views  # API views
+from mgame import views
+from mgame import api_views
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
@@ -44,6 +44,10 @@ urlpatterns = [
     path("api/users/<int:user_id>/events/completed/", api_views.user_completed_events, name="user_completed_events"),
     path('api/admin/create-wallets/', api_views.create_wallets_for_all_users, name='create_wallets_for_all_users'),
     path('api/admin/credit-wallet/', api_views.credit_user_wallet, name='credit_user_wallet'),
+    # path('api/users/<int:user_id>/transactions/', api_views.user_transactions, name='user_transactions'),
+    path('api/users/<int:user_id>/transactions/', api_views.UserTransactionListAPIView.as_view(), name='user-transactions'),
+
+
 
 
 

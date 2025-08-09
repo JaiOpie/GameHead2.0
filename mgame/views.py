@@ -11,6 +11,8 @@ from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from .models import Profile
 from django.contrib.auth import login
+from .utils import credit_wallet, debit_wallet
+
 
 
 
@@ -177,38 +179,71 @@ def addevent(request):
 def delete_event(request, event_id):
     try:
         event_obj = event.objects.get(id=event_id)
+
         if event_obj.user != request.user:
             raise Http404("You are not allowed to delete this event.")
+
+        # Only refund if event is not matched or completed
+        if not event_obj.is_match and not event_obj.is_completed:
+            credit_wallet(request.user, event_obj.amount, description=f"Refund for deleted event #{event_id}")
+
         event_obj.delete()
-        messages.success(request, "Event deleted successfully.")
+        messages.success(request, "Event deleted successfully. Refund has been issued.")
         return redirect('profile', pk=request.user.id)
+
     except event.DoesNotExist:
         messages.error(request, "Event not found.")
         return redirect('dashboard')
 
 
+
+@login_required(login_url='signin')
 def event_detail(request, event_id):
-    # Retrieve the event object and match
-    event_obj = event.objects.get(id=event_id)
-    user_object = User.objects.get(username=request.user.username)
-    match_object = match.objects.get(game_id=event_id)
+    # Retrieve event and match
     event_obj = get_object_or_404(event, id=event_id)
+    user_object = request.user
+    match_object = get_object_or_404(match, game_id=event_id)
+
     game_image_url = event_obj.game.image if event_obj.game and event_obj.game.image else None
 
     if request.method == 'POST':
         new_room_id = request.POST.get('new_room_id')
         if new_room_id:
-            event_obj.room_id = new_room_id
-            event_obj.save()
+            # Allow creator to set/update Room ID
+            if event_obj.user == user_object:
+                event_obj.room_id = new_room_id
+                event_obj.save()
+                messages.success(request, "Room ID updated successfully.")
+            else:
+                messages.error(request, "Only the creator can update Room ID.")
 
         ingame_name = request.POST.get('ingame_name')
         if ingame_name:
+            # Prevent self-match
+            if user_object == event_obj.user:
+                messages.error(request, "You cannot join your own event.")
+                return redirect('event_detail', event_id=event_id)
+
+            # Prevent double match
+            if event_obj.is_match:
+                messages.error(request, "This event is already matched.")
+                return redirect('event_detail', event_id=event_id)
+
+            # Check wallet balance and deduct
+            if not debit_wallet(user_object, event_obj.amount, description=f"Joined Event #{event_id}"):
+                messages.error(request, "Insufficient wallet balance to join this event.")
+                return redirect('event_detail', event_id=event_id)
+
+            # Mark as matched
             event_obj.user2ingame = ingame_name
             event_obj.is_match = True
             event_obj.save()
 
             match_object.user2 = user_object
             match_object.save()
+
+            messages.success(request, "You have successfully joined the event!")
+            return redirect('event_detail', event_id=event_id)
 
     user1 = match_object.user1
     user2 = match_object.user2
@@ -219,7 +254,7 @@ def event_detail(request, event_id):
         'user1': user1,
         'user2': user2,
         'match': match_object,
-        "game_image_url": game_image_url,
+        'game_image_url': game_image_url,
     }
 
     return render(request, 'event_detail.html', context)
@@ -249,26 +284,15 @@ def complete_event(request, event_id):
             match_obj = match.objects.get(game=event_obj)
             match_obj.winner = winner_user
             match_obj.save()
+
+            total_prize = event_obj.amount * 2
+            credit_wallet(winner_user, total_prize, description=f"Winnings from Event #{event_id}")
         except match.DoesNotExist:
             pass
 
     return redirect('/dashboard')
 
 
-def credit_wallet(user, amount, description="Top-up"):
-    wallet = user.wallet
-    wallet.balance += amount
-    wallet.save()
-    Transaction.objects.create(wallet=wallet, amount=amount, type='credit', description=description)
-
-def debit_wallet(user, amount, description="Game fee"):
-    wallet = user.wallet
-    if wallet.balance >= amount:
-        wallet.balance -= amount
-        wallet.save()
-        Transaction.objects.create(wallet=wallet, amount=amount, type='debit', description=description)
-        return True
-    return False  # Not enough funds
 
 
 

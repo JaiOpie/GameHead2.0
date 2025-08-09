@@ -5,6 +5,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from rest_framework.exceptions import ValidationError
+from .views import credit_wallet
+from rest_framework.generics import ListAPIView
+from rest_framework import filters
+from .models import Transaction
+from rest_framework.permissions import IsAuthenticated
+from decimal import Decimal
 
 from .models import Profile, Wallet, Transaction, event, match, Game
 from .serializers import (
@@ -13,6 +20,7 @@ from .serializers import (
 )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .utils import credit_wallet, debit_wallet
 
 
 
@@ -85,14 +93,55 @@ class EventViewSet(viewsets.ModelViewSet):
                 )
             return queryset
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        if instance.user != request.user:
+            return Response({'error': 'Permission denied'}, status=403)
+
+        # Only refund if not matched or completed
+        if not instance.is_match and not instance.is_completed:
+            credit_wallet(
+                request.user,
+                Decimal(instance.amount),
+                description=f"Refund for deleted event #{instance.id}"
+            )
+
+        self.perform_destroy(instance)
+        return Response({'message': 'Event deleted and amount refunded'})
 
     def perform_create(self, serializer):
-        match_type = self.request.data.get("match_type")
-        gamename = self.request.data.get("game")
-        characterid = self.request.data.get("user1ingame")
+        user = self.request.user
+        amount = int(self.request.data.get("amount", 0))
 
-        event_obj = serializer.save(user=self.request.user)
-        match.objects.create(game=event_obj, user1=self.request.user)
+        # Check for wallet
+        try:
+            wallet = Wallet.objects.get(user=user)
+        except Wallet.DoesNotExist:
+            raise ValidationError("User wallet not found.")
+
+        # Check for sufficient balance
+        if wallet.balance < amount:
+            raise ValidationError("Insufficient balance to create this event.")
+
+        # Deduct the amount
+        wallet.balance -= amount
+        wallet.save()
+
+        # Create the event
+        event_obj = serializer.save(user=user)
+
+        # Create corresponding match
+        match.objects.create(game=event_obj, user1=user)
+
+        # Optionally log transaction
+        Transaction.objects.create(
+            wallet=wallet,
+            amount=amount,
+            type='debit',
+            description=f"Match entry fee for event #{event_obj.id}"
+        )
+
 
 
 
@@ -106,6 +155,7 @@ class MatchViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def join_event(request, event_id):
+    user = request.user
     event_obj = get_object_or_404(event, id=event_id)
     if event_obj.user == request.user:
         return Response({'error': 'You cannot join your own event'}, status=403)
@@ -113,6 +163,11 @@ def join_event(request, event_id):
     ingame_name = request.data.get("ingame_name")
     if not ingame_name:
         return Response({'error': 'In-game name required'}, status=400)
+
+    # Debit wallet before matching
+    success = debit_wallet(user, event_obj.amount, description=f"Joined Event #{event_id}")
+    if not success:
+        return Response({'detail': 'Insufficient wallet balance.'}, status=status.HTTP_400_BAD_REQUEST)
 
     event_obj.user2ingame = ingame_name
     event_obj.is_match = True
@@ -143,7 +198,14 @@ def complete_event_api(request, event_id):
     match_obj.winner = winner_user
     match_obj.save()
 
-    return Response({'message': 'Event completed'})
+
+    total_prize = Decimal(event_obj.amount) * 2
+    try:
+        credit_wallet(winner_user, total_prize, description=f"Winnings for Event #{event_id}")
+    except Exception as e:
+        return Response({'error': f"Failed to credit wallet: {str(e)}"}, status=500)
+
+    return Response({'message': f'Event completed. ₹{total_prize} credited to {winner_user.username}'})
 
 
 # Room ID Update
@@ -162,7 +224,6 @@ def update_room_id_api(request, event_id):
     return Response({'message': 'Room ID updated'})
 
 
-# Delete Event
 @api_view(['DELETE'])
 @permission_classes([permissions.IsAuthenticated])
 def delete_event_api(request, event_id):
@@ -171,8 +232,21 @@ def delete_event_api(request, event_id):
     if event_obj.user != request.user:
         return Response({'error': 'Permission denied'}, status=403)
 
+    credit_wallet(
+        request.user,
+        Decimal(event_obj.amount),
+        description=f"Refund for deleted event #{event_id}"
+    )
+    # Refund only if not matched or completed
+    if not event_obj.is_match and not event_obj.is_completed:
+        credit_wallet(
+            request.user,
+            Decimal(event_obj.amount),
+            description=f"Refund for deleted event #{event_id}"
+        )
+
     event_obj.delete()
-    return Response({'message': 'Event deleted successfully'})
+    return Response({'message': 'Event deleted and amount refunded'})
 
 
 # Wallet Balance
@@ -290,5 +364,29 @@ def credit_user_wallet(request):
 class GameViewSet(viewsets.ModelViewSet):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
-    permission_classes = [permissions.IsAuthenticated]  # or AllowAny if you want it open
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]  # 👈 this is key
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_transactions(request, user_id):
+    if request.user.id != user_id:
+        return Response({"detail": "Unauthorized"}, status=403)
+
+    transactions = Transaction.objects.filter(wallet__user__id=user_id).order_by('-timestamp')
+    serializer = TransactionSerializer(transactions, many=True)
+    return Response(serializer.data)
+
+class UserTransactionListAPIView(ListAPIView):
+    serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated]
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['type', 'description', 'amount', 'timestamp']
+    ordering_fields = ['amount', 'timestamp', 'type']
+    ordering = ['-timestamp']  # default ordering
+
+    def get_queryset(self):
+        user = self.request.user
+        return Transaction.objects.filter(wallet__user=user)

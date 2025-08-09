@@ -496,7 +496,7 @@ document.getElementById("addEventForm").addEventListener("submit", async functio
   const game = parseInt(document.getElementById("gameselect").value);
   const user1ingame = document.getElementById("ingamename").value;
   const match_type = document.getElementById("matchtype").value;
-  const amount = document.getElementById("amount").value;
+  const amount = parseFloat(document.getElementById("amount").value);
 
   const errorBox = document.getElementById("event-error");
   const successBox = document.getElementById("event-success");
@@ -505,6 +505,26 @@ document.getElementById("addEventForm").addEventListener("submit", async functio
   successBox.style.display = "none";
 
   try {
+
+    const balanceResponse = await fetch("/api/wallet/balance", {
+      method: "GET",
+      headers: {
+        "Accept": "application/json"
+      },
+      credentials: "include"
+    });
+
+    const balanceData = await balanceResponse.json();
+    const walletBalance = parseFloat(balanceData.balance);
+
+
+    if (walletBalance < amount) {
+      errorBox.textContent = "Insufficient wallet balance to create this event.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    // 3. Proceed to submit the form
     const response = await fetch("/api/events/", {
       method: "POST",
       headers: {
@@ -521,7 +541,14 @@ document.getElementById("addEventForm").addEventListener("submit", async functio
       successBox.style.display = "block";
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      errorBox.textContent = data.detail || "Failed to create event.";
+      if (data.detail) {
+        errorBox.textContent = data.detail;
+      } else if (typeof data === 'object') {
+        const firstError = Object.values(data)[0];
+        errorBox.textContent = Array.isArray(firstError) ? firstError[0] : firstError;
+      } else {
+        errorBox.textContent = "Failed to create event.";
+      }
       errorBox.style.display = "block";
     }
   } catch (err) {
@@ -529,5 +556,6 @@ document.getElementById("addEventForm").addEventListener("submit", async functio
     errorBox.style.display = "block";
   }
 });
+
 </script>
 {% endblock body %}

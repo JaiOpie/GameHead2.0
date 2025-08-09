@@ -136,6 +136,91 @@
   color: #ccc;
   margin-top: 30px;
 }
+
+.transaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: #2a2a40;
+  color: #ffffff;
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.transaction-table th,
+.transaction-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #3a3a4d;
+}
+
+.transaction-table th {
+  background-color: #1e1e2f;
+  color: #00ffcc;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.transaction-credit {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.transaction-debit {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.transaction-empty {
+  text-align: center;
+  padding: 20px;
+  color: #aaa;
+}
+
+/* Search & Sort Controls */
+.txn-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.txn-search,
+.txn-sort {
+  padding: 8px 12px 8px;
+  border: 1px solid #00ffcc;
+  border-radius: 6px;
+  background-color: #1e1e2f;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.txn-search:focus,
+.txn-sort:focus {
+  border-color: #00cc99;
+  background-color: #25253a;
+}
+
+.txn-search::placeholder {
+  color: #999;
+}
+
+.txn-sort {
+  cursor: pointer;
+}
+
+.txn-sort option {
+  background-color: #1e1e2f;
+  color: #ffffff;
+}
+
+
 {% endblock styles %}
 
 {% block body %}
@@ -143,6 +228,8 @@
   <div class="tab-header">
     <button class="tab-link active" onclick="openTab(event, 'upcoming')">Upcoming Matches</button>
     <button class="tab-link" onclick="openTab(event, 'completed')">Completed Matches</button>
+    <button class="tab-link" onclick="openTab(event, 'transactions')">Transactions</button>
+
   </div>
 
   <div id="upcoming" class="tab-content" style="display: block;">
@@ -158,7 +245,28 @@
       <p class="no-matches">Loading...</p>
     </div>
   </div>
+
+<div class="txn-controls">
+  <input type="text" id="txn-search" class="txn-search" placeholder="Search transactions..." oninput="applyTxnFilters()">
+  <select id="txn-sort" class="txn-sort" onchange="applyTxnFilters()">
+    <option value="-timestamp">Newest First</option>
+    <option value="timestamp">Oldest First</option>
+    <option value="-amount">Amount (High → Low)</option>
+    <option value="amount">Amount (Low → High)</option>
+  </select>
 </div>
+
+
+  <div id="transactions" class="tab-content">
+  <h2>Transaction History</h2>
+  <div id="transactions-container">
+    <p class="no-matches">Loading...</p>
+  </div>
+</div>
+</div>
+
+
+
 {% endblock body %}
 
 {% block scripts %}
@@ -213,6 +321,61 @@ function renderEvents(events, containerId) {
   }
 }
 
+
+function fetchTransactions(search = '', sort = '-timestamp') {
+  const url = `/api/users/${userId}/transactions/?search=${encodeURIComponent(search)}&ordering=${encodeURIComponent(sort)}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => renderTransactions(data))
+    .catch(err => {
+      console.error("Error loading transactions:", err);
+      document.getElementById("transactions-container").innerHTML =
+        "<p class='no-matches'>Failed to load transactions.</p>";
+    });
+}
+
+
+function renderTransactions(transactions) {
+  const container = document.getElementById("transactions-container");
+  container.innerHTML = "";
+
+  if (!transactions.length) {
+    container.innerHTML = "<p class='transaction-empty'>No transactions found.</p>";
+    return;
+  }
+
+  const table = document.createElement("table");
+  table.className = "transaction-table";
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Description</th>
+        <th>Date & Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${transactions.map(txn => `
+        <tr>
+          <td class="${txn.type === "credit" ? "transaction-credit" : "transaction-debit"}">
+            ${txn.type.charAt(0).toUpperCase() + txn.type.slice(1)}
+          </td>
+          <td>₹${parseFloat(txn.amount).toFixed(2)}</td>
+          <td>${txn.description}</td>
+          <td>${new Date(txn.timestamp).toLocaleString()}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+
+  container.appendChild(table);
+}
+
+
+
 function fetchMatches() {
   fetch(`/api/users/${userId}/events/upcoming/`)
     .then(res => res.json())
@@ -231,8 +394,28 @@ function fetchMatches() {
       document.getElementById("completed-events-container").innerHTML =
         "<p class='no-matches'>Failed to load completed events.</p>";
     });
+
+  fetch(`/api/users/${userId}/transactions/`)
+    .then(res => res.json())
+    .then(data => renderTransactions(data))
+    .catch(err => {
+      console.error("Error loading transactions:", err);
+      document.getElementById("transactions-container").innerHTML =
+        "<p class='no-matches'>Failed to load transactions.</p>";
+    });
 }
 
-document.addEventListener("DOMContentLoaded", fetchMatches);
+function applyTxnFilters() {
+  const search = document.getElementById("txn-search").value;
+  const sort = document.getElementById("txn-sort").value;
+  fetchTransactions(search, sort);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchMatches();
+  fetchTransactions(); // loads default search/sort
+});
+
 </script>
+
 {% endblock scripts %}
